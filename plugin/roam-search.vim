@@ -120,6 +120,6 @@ call roam#init#apply_mappings_from_dict(s:mappings, '')
 " Expressions
 imap <expr> [[ fzf#vim#complete(fzf#wrap({
     \ 'source': 'cd '.g:roam_wiki_root.' && find * \| sed -r "s/(.*)\..*/\1/"',
-    \ 'reducer': function('util#handle_completed_link'),
+    \ 'reducer': function('wiki#link#util#handle_completed_link'),
     \ 'options': '--bind=ctrl-d:print-query --multi --reverse --margin 15%,0',
     \ 'right':    40}))
