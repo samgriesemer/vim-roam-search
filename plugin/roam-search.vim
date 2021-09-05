@@ -87,16 +87,6 @@ command! -bang -nargs=* RoamFzfFullPages
     \   'accept_line',
     \ )
 
-" RoamFzfFullPages - search lines in all wiki files and go to file. Following FZF
-function! RgAllFzf(cmd, query, loc, fullscreen)
-  let command_fmt = a:cmd
-  let initial_command = printf(command_fmt, shellescape(a:query))
-  let reload_command = printf(command_fmt, '{q}')
-  "let spec = {'options': ['--phony', '--query', a:query, '--bind', 'change:reload:'.reload_command, '--delimiter', ':', '--preview', 'rga --pretty --context 5 {q} {1} | bat --color=always --pager=never --highlight-line=5' ]}
-  let spec = {'options': ['--phony', '--query', a:query, '--bind', 'change:reload:'.reload_command, '--delimiter', ':', '--preview', s:plugin_path.'/autoload/roam/search/preview-rga.sh '''.a:loc.'/{..2}'' ''{q}''' ]}
-  call fzf#vim#grep(initial_command, 1, spec, a:fullscreen)
-endfunction
-
 let s:rga_base = 'rga --column --line-number --no-heading --color=always --smart-case -- %s'
 command! -bang -nargs=* RoamFzfRgAll 
     \ call roam#search#fzf_grep_preview(
@@ -113,37 +103,6 @@ command! -bang -nargs=* RoamFzfRgAll
     \   'change:reload:'.printf(s:rga_base, '{q}'),
     \ )
 
-"\ call RgAllFzf(
-"\   'cd '.a:loc.' && rga --column --line-number --no-heading --color=always --smart-case -- %s || true'
-"\   <q-args>,
-"\   g:roam_wiki_root,
-"\   <bang>0
-"\ )
-
-"command! -bang -nargs=* RoamFzfFiles
-    "\ call RgAllFzf(
-    "\   'cd '.g:roam_wiki_root.' && rga --files --preview='.s:plugin_path.'/autoload/roam/search/preview-rga.sh '''.g:roam_wiki_root.'/{..}'' "*"',
-    "\   shellescape(<q-args>),
-    "\   '*',
-    "\   <q-args>,
-    "\   'wFiles> ',
-    "\   '..',
-    "\   <bang>0,
-    "\   'accept_page',
-    "\ )
-
-
-"command! -bang -nargs=* RoamRGA
-    "\ call roam#search#fzf_grep_preview(
-    "\   'cd '.g:roam_wiki_root.' && '.'rga --rga-adapters="-zip" ',
-    "\   shellescape(<q-args>),
-    "\   '*',
-    "\   <q-args>,
-    "\   'wLines> ',
-    "\   '3..',
-    "\   <bang>0,
-    "\   'accept_line',
-    "\ )
 
 "command! -bang -nargs=* RoamFzfLinesHard
 
@@ -160,15 +119,6 @@ command! -bang -nargs=* RoamFzfRgAll
     "\   {
     "\       
     "\ )
-
-"function! RipgrepFzf(query, fullscreen)
-  "let command_fmt = 'rg --column --line-number --no-heading --color=always --smart-case -- %s || true'
-  "let initial_command = printf(command_fmt, shellescape(a:query))
-  "let reload_command = printf(command_fmt, '{q}')
-  "let spec = {'options': ['--phony', '--query', a:query, '--bind', 'change:reload:'.reload_command]}
-  "call fzf#vim#grep(initial_command, 1, fzf#vim#with_preview(spec), a:fullscreen)
-"endfunction
-
 
 
 " Initialize mappings
