@@ -9,8 +9,23 @@ let s:plugin_path = escape(expand('<sfile>:p:h:h'), '\')
 
 
 " RoamFzfFiles - search wiki filenames and go to file
-command! -bang -complete=dir RoamFzfFiles
-    \ call fzf#vim#files(g:roam_wiki_root, fzf#vim#with_preview({'right':'100'}, 'down:70%:wrap'), <bang>0)
+"command! -bang -complete=dir RoamFzfFiles
+    "\ call fzf#vim#files(g:roam_wiki_root, fzf#vim#with_preview({'right':'100'}, 'down:70%:wrap'), <bang>0)
+
+command! -bang -nargs=* RoamFzfFiles
+    "\ call roam#search#fzf_grep_preview(rg_base, shellescape(<q-args>), g:roam_wiki_root, <q-args>, <bang>0)
+    \ call roam#search#fzf_grep_preview(
+    \   'cd '.g:roam_wiki_root.' && rg --files',
+    \   shellescape(<q-args>),
+    \   '*',
+    \   <q-args>,
+    \   'wFiles> ',
+    \   '..',
+    \   <bang>0,
+    \   0,
+    \   'accept_page',
+    \   s:plugin_path.'/autoload/roam/search/preview-rga.sh '''.g:roam_wiki_root.'/{..}'' {q}'
+    \ )
 
 " RoamFzfLines - search lines in all wiki files and go to file. Following FZF
 " session has a prefilled query using the first argument, which is a
@@ -25,6 +40,7 @@ command! -bang -nargs=* RoamFzfLines
     \   'wLines> ',
     \   '3..',
     \   <bang>0,
+    \   0,
     \   'accept_line',
     \ )
 
@@ -39,6 +55,7 @@ command! -bang -nargs=* RoamFzfLinesFnames
     \   'wLines+f> ',
     \   '1,3..',
     \   <bang>0,
+    \   0,
     \   'accept_line',
     \ )
 
@@ -52,6 +69,7 @@ command! -bang -nargs=* RoamFzfFullLines
     \   'wLines+L> ',
     \   '3..',
     \   <bang>0,
+    \   0,
     \   'accept_line',
     \ )
 
@@ -65,8 +83,69 @@ command! -bang -nargs=* RoamFzfFullPages
     \   'wLines+P> ',
     \   '3..',
     \   <bang>0,
+    \   0,
     \   'accept_line',
     \ )
+
+" RoamFzfFullPages - search lines in all wiki files and go to file. Following FZF
+function! RgAllFzf(cmd, query, loc, fullscreen)
+  let command_fmt = a:cmd
+  let initial_command = printf(command_fmt, shellescape(a:query))
+  let reload_command = printf(command_fmt, '{q}')
+  "let spec = {'options': ['--phony', '--query', a:query, '--bind', 'change:reload:'.reload_command, '--delimiter', ':', '--preview', 'rga --pretty --context 5 {q} {1} | bat --color=always --pager=never --highlight-line=5' ]}
+  let spec = {'options': ['--phony', '--query', a:query, '--bind', 'change:reload:'.reload_command, '--delimiter', ':', '--preview', s:plugin_path.'/autoload/roam/search/preview-rga.sh '''.a:loc.'/{..2}'' ''{q}''' ]}
+  call fzf#vim#grep(initial_command, 1, spec, a:fullscreen)
+endfunction
+
+let s:rga_base = 'rga --column --line-number --no-heading --color=always --smart-case -- %s'
+command! -bang -nargs=* RoamFzfRgAll 
+    \ call roam#search#fzf_grep_preview(
+    \   'cd '.g:roam_wiki_root.' && '.printf(s:rga_base, shellescape(<q-args>)),
+    \   '',
+    \   '',
+    \   <q-args>,
+    \   'wAll> ',
+    \   '..',
+    \   <bang>0,
+    \   1,
+    \   'accept_line',
+    \   s:plugin_path.'/autoload/roam/search/preview-rga.sh '''.g:roam_wiki_root.'/{..2}'' {q}',
+    \   'change:reload:'.printf(s:rga_base, '{q}'),
+    \ )
+
+"\ call RgAllFzf(
+"\   'cd '.a:loc.' && rga --column --line-number --no-heading --color=always --smart-case -- %s || true'
+"\   <q-args>,
+"\   g:roam_wiki_root,
+"\   <bang>0
+"\ )
+
+"command! -bang -nargs=* RoamFzfFiles
+    "\ call RgAllFzf(
+    "\   'cd '.g:roam_wiki_root.' && rga --files --preview='.s:plugin_path.'/autoload/roam/search/preview-rga.sh '''.g:roam_wiki_root.'/{..}'' "*"',
+    "\   shellescape(<q-args>),
+    "\   '*',
+    "\   <q-args>,
+    "\   'wFiles> ',
+    "\   '..',
+    "\   <bang>0,
+    "\   'accept_page',
+    "\ )
+
+
+"command! -bang -nargs=* RoamRGA
+    "\ call roam#search#fzf_grep_preview(
+    "\   'cd '.g:roam_wiki_root.' && '.'rga --rga-adapters="-zip" ',
+    "\   shellescape(<q-args>),
+    "\   '*',
+    "\   <q-args>,
+    "\   'wLines> ',
+    "\   '3..',
+    "\   <bang>0,
+    "\   'accept_line',
+    "\ )
+
+"command! -bang -nargs=* RoamFzfLinesHard
 
 "command! -bang -nargs=* RoamFzfLinesHard
     ""\ call roam#search#fzf_grep_preview(rg_base, shellescape(<q-args>), g:roam_wiki_root, <q-args>, <bang>0)
@@ -98,6 +177,7 @@ nnoremap <silent> <plug>(roam-fzf-lines)              :RoamFzfLines<cr>
 nnoremap <silent> <plug>(roam-fzf-lines-fnames)       :RoamFzfLinesFnames<cr>
 nnoremap <silent> <plug>(roam-fzf-full-lines)         :RoamFzfFullLines<cr>
 nnoremap <silent> <plug>(roam-fzf-full-pages)         :RoamFzfFullPages<cr>
+nnoremap <silent> <plug>(roam-fzf-rg-all-lines)       :RoamFzfRgAll<cr>
 
 " Apply default mappings
 " the following are applied if the user allows `all` or `global` defaults
@@ -108,6 +188,7 @@ let s:mappings = index(['all', 'global'], g:wiki_mappings_use_defaults) >= 0
       \ '<plug>(roam-fzf-lines-fnames)': '<leader>wL',
       \ '<plug>(roam-fzf-full-lines)':   '<leader>wsl',
       \ '<plug>(roam-fzf-full-pages)':   '<leader>wsL',
+      \ '<plug>(roam-fzf-rg-all-lines)': '<leader>wsa',
       \} : {}
 
 " any user set global mappings are overridden here
