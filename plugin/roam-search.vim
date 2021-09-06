@@ -13,7 +13,6 @@ call roam#init#option('roam_search_wrap_link', 'roam_search#util#default_wrap_li
 
 " initialize commands
 command! -bang -nargs=* RoamFzfFiles
-    "\ call roam#search#fzf_grep_preview(rg_base, shellescape(<q-args>), g:roam_wiki_root, <q-args>, <bang>0)
     \ call roam#search#fzf_grep_preview(
     \   'cd '.g:roam_wiki_root.' && rg --files',
     \   shellescape(<q-args>),
