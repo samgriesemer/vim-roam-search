@@ -1,4 +1,4 @@
-" A networked note management plugin for Vim
+" Search extension for vim-roam
 "
 " Maintainer: Sam Griesemer
 " Email:      samgriesemer@gmail.com
@@ -8,10 +8,10 @@
 let s:plugin_path = escape(expand('<sfile>:p:h:h'), '\')
 
 
-" RoamFzfFiles - search wiki filenames and go to file
-"command! -bang -complete=dir RoamFzfFiles
-    "\ call fzf#vim#files(g:roam_wiki_root, fzf#vim#with_preview({'right':'100'}, 'down:70%:wrap'), <bang>0)
+call roam#init#option('roam_search_wrap_link', 'roam_search#util#default_wrap_link')
 
+
+" initialize commands
 command! -bang -nargs=* RoamFzfFiles
     "\ call roam#search#fzf_grep_preview(rg_base, shellescape(<q-args>), g:roam_wiki_root, <q-args>, <bang>0)
     \ call roam#search#fzf_grep_preview(
@@ -24,7 +24,7 @@ command! -bang -nargs=* RoamFzfFiles
     \   <bang>0,
     \   0,
     \   'accept_page',
-    \   s:plugin_path.'/autoload/roam/search/preview-rga.sh '''.g:roam_wiki_root.'/{..}'' {q}'
+    \   s:plugin_path.'/autoload/roam_search/preview-rga.sh '''.g:roam_wiki_root.'/{..}'' {q}'
     \ )
 
 " RoamFzfLines - search lines in all wiki files and go to file. Following FZF
@@ -62,7 +62,7 @@ command! -bang -nargs=* RoamFzfLinesFnames
 " RoamFzfFullLines - search lines in all wiki files and go to file. Following FZF
 command! -bang -nargs=* RoamFzfFullLines
     \ call roam#search#fzf_grep_preview(
-    \   'python3 ' . s:plugin_path . '/autoload/roam/search/search.py ' . g:roam_wiki_root, 
+    \   'python3 '.s:plugin_path.'/autoload/roam_search/search.py '.g:roam_wiki_root, 
     \   '',
     \   '',
     \   <q-args>,
@@ -76,7 +76,7 @@ command! -bang -nargs=* RoamFzfFullLines
 " RoamFzfFullPages - search lines in all wiki files and go to file. Following FZF
 command! -bang -nargs=* RoamFzfFullPages
     \ call roam#search#fzf_grep_preview(
-    \   'python3 ' . s:plugin_path . '/autoload/roam/search/search.py ' . g:roam_wiki_root . ' 1', 
+    \   'python3 '.s:plugin_path.'/autoload/roam_search/search.py '.g:roam_wiki_root.' 1', 
     \   '',
     \   '',
     \   <q-args>,
@@ -99,7 +99,7 @@ command! -bang -nargs=* RoamFzfRgAll
     \   <bang>0,
     \   1,
     \   'accept_line',
-    \   s:plugin_path.'/autoload/roam/search/preview-rga.sh '''.g:roam_wiki_root.'/{..2}'' {q}',
+    \   s:plugin_path.'/autoload/roam_search/preview-rga.sh '''.g:roam_wiki_root.'/{..2}'' {q}',
     \   'change:reload:'.printf(s:rga_base, '{q}'),
     \ )
 
@@ -147,10 +147,36 @@ call extend(s:mappings, get(g:, 'roam_mappings_global', {}))
 " mappings finally applied
 call roam#init#apply_mappings_from_dict(s:mappings, '')
 
-
 " Expressions
 imap <expr> [[ fzf#vim#complete(fzf#wrap({
     \ 'source': 'cd '.g:roam_wiki_root.' && find * \| sed -r "s/(.*)\..*/\1/"',
-    \ 'reducer': function('wiki#link#util#handle_completed_link'),
-    \ 'options': '--bind=ctrl-d:print-query --multi --reverse --margin 15%,0',
-    \ 'right':    40}))
+    \ 'reducer': function(get(g:, 'roam_search_wrap_link')),
+    \ 'options': '--bind='.get(g:, 'wiki_fzf_pages_force_create_key', 'alt-enter').':print-query'
+    \ }))
+
+
+function! TestFunc(lines)
+    let l:out = join(a:lines)
+    " janky
+    normal! xx
+    return l:out.']]'
+endfunction
+function! TestSrc(lines)
+    let l:curline = getline('.')
+    let l:mask = l:curline[:getcurpos('.')[2]]
+    echo l:mask
+    let l:mlist = matchlist(l:mask, '\[\[\([^\]]*\)\]\]$')
+    " TODO: add support for just doing `##` to create link of current file anchors
+
+    if empty(l:mlist)
+        echo "Cursor not properly positioned over link"
+        return []
+    endif
+    return wiki#page#get_anchors(l:mlist[1])
+endfunction
+imap <expr> ## fzf#vim#complete(fzf#wrap({
+    \ 'prefix': '',
+    \ 'source': function('TestSrc'),
+    \ 'reducer': function('TestFunc'),
+    \ 'options': '--bind='.get(g:, 'wiki_fzf_pages_force_create_key', 'alt-enter').':print-query'
+    \ }))
