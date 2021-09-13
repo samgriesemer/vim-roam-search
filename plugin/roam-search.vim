@@ -136,7 +136,7 @@ let s:mappings = index(['all', 'global'], g:wiki_mappings_use_defaults) >= 0
       \ '<plug>(roam-fzf-lines)':        '<leader>wl',
       \ '<plug>(roam-fzf-lines-fnames)': '<leader>wL',
       \ '<plug>(roam-fzf-full-lines)':   '<leader>wsl',
-      \ '<plug>(roam-fzf-full-pages)':   '<leader>wsL',
+      \ '<plug>(roam-fzf-full-pages)':   '<leader>wsp',
       \ '<plug>(roam-fzf-rg-all-lines)': '<leader>wsa',
       \} : {}
 
@@ -156,6 +156,9 @@ imap <expr> [[ fzf#vim#complete(fzf#wrap({
 
 function! TestFunc(lines)
     let l:out = join(a:lines)
+    if l:out == '##'
+        return '##'
+    endif
     " janky
     normal! xx
     return l:out.']]'
@@ -177,5 +180,5 @@ imap <expr> ## fzf#vim#complete(fzf#wrap({
     \ 'prefix': '',
     \ 'source': function('TestSrc'),
     \ 'reducer': function('TestFunc'),
-    \ 'options': '--bind='.get(g:, 'wiki_fzf_pages_force_create_key', 'alt-enter').':print-query'
+    \ 'options': '--bind='.get(g:, 'wiki_fzf_pages_force_create_key', 'alt-enter').':print-query -0'
     \ }))
